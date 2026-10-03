@@ -7,18 +7,21 @@ export default function Login() {
     uemail: "",
     upassword: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState("");
+
   const HandelSubmit = async function (e) {
     e.preventDefault();
     const api = "http://localhost:3000/api/login";
+    setIsSubmitting(true);
+    setLoginError("");
 
     try {
       const response = await fetch(api, {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify(Ldata),
       });
 
@@ -38,9 +41,16 @@ export default function Login() {
           });
         }
         localStorage.setItem("token", data.token);
+      } else {
+        setLoginError(
+          data.message || "Login failed. Please check your credentials.",
+        );
       }
     } catch (err) {
       console.log(err);
+      setLoginError("Unable to sign in right now. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -51,35 +61,55 @@ export default function Login() {
       [id]: value,
     }));
   };
+
   return (
-    <>
-      <div className="Mlogind">
-        <form>
-          <label htmlFor="email">Enter your Email id:</label>
-          <br />
-          <input
-            type="email"
-            id="uemail"
-            onChange={HandelChange}
-            value={Ldata.uemail}
-          />
-          <br />
-          <label htmlFor="password">Enter your password:</label>
-          <br />
-          <input
-            type="password"
-            id="upassword"
-            value={Ldata.upassword}
-            onChange={HandelChange}
-          />
-          <br />
-          <p>
-            Don't have an account? <Link to="/register">Register</Link>
+    <div className="page-shell auth-page">
+      <div className="auth-card">
+        <div className="auth-card__header">
+          <p className="eyebrow">Welcome back</p>
+          <h1>Login to your account</h1>
+        </div>
+
+        <form className="auth-form" onSubmit={HandelSubmit}>
+          <div className="field-group">
+            <label htmlFor="uemail">Email address</label>
+            <input
+              type="email"
+              id="uemail"
+              onChange={HandelChange}
+              value={Ldata.uemail}
+              placeholder="name@campus.edu"
+            />
+          </div>
+
+          <div className="field-group">
+            <label htmlFor="upassword">Password</label>
+            <input
+              type="password"
+              id="upassword"
+              value={Ldata.upassword}
+              onChange={HandelChange}
+              placeholder="Enter your password"
+            />
+          </div>
+
+          {loginError && (
+            <div className="form-message form-message--error">{loginError}</div>
+          )}
+
+          <button
+            type="submit"
+            className="primary-btn full-width"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Signing in..." : "Login"}
+          </button>
+
+          <p className="auth-link-row">
+            Don&apos;t have an account? <Link to="/register">Register</Link>
           </p>
-          <br />
-          <button onClick={HandelSubmit}> Submit</button>
         </form>
       </div>
-    </>
+    </div>
   );
 }

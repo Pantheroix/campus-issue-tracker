@@ -8,9 +8,16 @@ export default function Register() {
     urole: "Student",
     upassword: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registerMessage, setRegisterMessage] = useState("");
+  const [registerError, setRegisterError] = useState("");
+
   const HandelSubmit = async (event) => {
     event.preventDefault();
     const api = "http://localhost:3000/api/register";
+    setIsSubmitting(true);
+    setRegisterError("");
+    setRegisterMessage("");
 
     try {
       const response = await fetch(api, {
@@ -24,11 +31,26 @@ export default function Register() {
 
       if (response.ok) {
         console.log(data.message);
+        setRegisterMessage(
+          "Account created successfully. You can now sign in.",
+        );
+        setRdata({
+          uname: "",
+          uemail: "",
+          urole: "Student",
+          upassword: "",
+        });
+      } else {
+        setRegisterError(data.message || "Unable to create account right now.");
       }
     } catch (err) {
       console.log(err);
+      setRegisterError("Something went wrong while creating your account.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
   const Handelchange = (event) => {
     const { id, value } = event.target;
     setRdata((prevdata) => ({
@@ -38,56 +60,86 @@ export default function Register() {
   };
 
   return (
-    <>
-      <div className="Rform">
-        <div>
-          <form onSubmit={HandelSubmit}>
-            <label htmlFor="Name">Enter your Name:</label>
-            <br />
-            <input
-              type="text"
-              id="uname"
-              value={Rdata.uname}
-              onChange={Handelchange}
-            />
-            <br />
-            <label htmlFor="Email">Enter your Email id:</label>
-            <br />
+    <div className="page-shell auth-page">
+      <div className="auth-card auth-card--wide">
+        <div className="auth-card__header">
+          <p className="eyebrow">New here?</p>
+          <h1>Create your campus account</h1>
+        </div>
+
+        <form className="auth-form" onSubmit={HandelSubmit}>
+          <div className="field-row">
+            <div className="field-group">
+              <label htmlFor="uname">Full name</label>
+              <input
+                type="text"
+                id="uname"
+                value={Rdata.uname}
+                onChange={Handelchange}
+                placeholder="Your full name"
+              />
+            </div>
+
+            <div className="field-group">
+              <label htmlFor="urole">Role</label>
+              <select
+                name="Role"
+                id="urole"
+                value={Rdata.urole}
+                onChange={Handelchange}
+              >
+                <option value="Student">Student</option>
+                <option value="Teacher">Teacher</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="field-group">
+            <label htmlFor="uemail">Email address</label>
             <input
               type="email"
               id="uemail"
               value={Rdata.uemail}
               onChange={Handelchange}
+              placeholder="name@campus.edu"
             />
-            <br />
-            <label htmlFor="role">Enter your Role:</label>
-            <br />
-            <select
-              name="Role"
-              id="urole"
-              value={Rdata.urole}
-              onChange={Handelchange}
-            >
-              <option value="Student">Student</option>
-              <option value="Teacher">Teacher</option>
-            </select>
-            <br />
-            <label htmlFor="password">Create a password:</label>
-            <br />
+          </div>
+
+          <div className="field-group">
+            <label htmlFor="upassword">Password</label>
             <input
               type="password"
               id="upassword"
               value={Rdata.upassword}
               onChange={Handelchange}
+              placeholder="Create a password"
             />
-            <br />
-            <p>
-              Already have an account? <Link to="/login">Login</Link>
-            </p>
-            <button type="submit">Submit</button>
-          </form>
-        </div>
+          </div>
+
+          {registerMessage && (
+            <div className="form-message form-message--success">
+              {registerMessage}
+            </div>
+          )}
+          {registerError && (
+            <div className="form-message form-message--error">
+              {registerError}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="primary-btn full-width"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Creating account..." : "Register"}
+          </button>
+
+          <p className="auth-link-row">
+            Already have an account? <Link to="/login">Login</Link>
+          </p>
+        </form>
       </div>
-    </>
+    </div>
   );
 }
