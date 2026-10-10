@@ -5,6 +5,11 @@ const { connection } = require("../database.js");
 const router = express.Router();
 
 router.get("/api/teach/issues", authmiddleware, (req, res) => {
+  const role = req.user.role;
+
+  if (role != "Teacher") {
+    return res.status(403).send("unauthorised");
+  }
   const query = ` select u.uname as name,
     u.urole as role,
     i.issue_id as issue_id,

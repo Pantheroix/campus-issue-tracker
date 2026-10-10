@@ -60,16 +60,25 @@ router.get("/api/fetch/issues", authmiddleware, (req, res) => {
 
 router.get("/api/issues/:issue_id/comments", authmiddleware, (req, res) => {
   const issue_id = req.params.issue_id;
+  const uid = req.user.uid;
+  const role = req.user.role;
 
   const query = `
-    SELECT c.c_id, c.comment, c.created_at, u.uname AS name, u.urole AS role
-    FROM comments c
-    JOIN users2 u ON c.uid = u.uid
-    WHERE c.issue_id = ?
-    ORDER BY c.created_at ASC
+   SELECT
+        c.c_id AS comment_id,
+        c.comment,
+        c.created_at,
+        u.uname AS name,
+        u.urole AS role
+      FROM comments c
+      JOIN users2 u ON c.uid = u.uid
+      JOIN issues i ON c.issue_id = i.issue_id
+      WHERE c.issue_id = ?
+      AND (i.uid = ? OR ? = 'Teacher')
+      ORDER BY c.created_at ASC 
   `;
 
-  connection.query(query, [issue_id], (err, result) => {
+  connection.query(query, [issue_id, uid, role], (err, result) => {
     if (err) {
       console.log("Comments fetch error:", err);
       return res.status(500).json({ message: "database error" });
@@ -95,6 +104,26 @@ router.post(
     if (!comment) {
       return res.send("comments can not be empty");
     }
+
+    const checkQuery = `
+  SELECT issue_id
+  FROM issues
+  WHERE issue_id = ? AND uid = ?
+`;
+
+    connection.query(checkQuery, [issue_id, uid], (err, results) => {
+      if (err) {
+        return res.status(500).json({
+          message: "Database error",
+        });
+      }
+
+      if (results.length === 0) {
+        return res.status(403).json({
+          message: "You cannot comment on this issue",
+        });
+      }
+    });
 
     const query = "insert into comments(issue_id,uid,comment) values(?,?,?)";
     connection.query(query, [issue_id, uid, comment], (err, result) => {
